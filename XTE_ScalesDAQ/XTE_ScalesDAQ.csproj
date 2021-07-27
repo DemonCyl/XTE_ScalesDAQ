@@ -115,7 +115,10 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Static\01.png" />
+    <Resource Include="Static\02.png" />
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="setup.ico" />
   </ItemGroup>

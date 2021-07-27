@@ -9,14 +9,16 @@
     <Grid Background="LightGray">
         <Viewbox VerticalAlignment="Top">
             <Canvas x:Name="Canvas1" Height=" 270" Width="440">
+                <Image x:Name="StatusImage" Width="15" Height="13" Canvas.Left="55" Canvas.Top="23" />
                 <TextBox x:Name="TM" HorizontalAlignment="Center" Grid.Row="3" Foreground="Black" FontFamily="Microsoft Yahei" FontSize="17" Background="LightGray" HorizontalContentAlignment="Center"
-                           TextWrapping="Wrap" Text="" VerticalAlignment="Center"  Height="32" Width="323" Canvas.Left="107" Canvas.Top="10" />
+                           TextWrapping="Wrap" Text="" VerticalAlignment="Center"  Height="32" Width="323" Canvas.Left="107" Canvas.Top="10" IsReadOnly="True" />
                 <Label Content="条码：" Canvas.Left="10" Canvas.Top="64" Height="27" FontFamily="Microsoft Yahei" Foreground="Black" Width="50"/>
                 <Label Content="重量：" Canvas.Left="10" Canvas.Top="136" Height="27" FontFamily="Microsoft Yahei" Foreground="Black" Width="50"/>
                 <TextBox x:Name="barText" HorizontalAlignment="Center" Foreground="Black" FontFamily="Microsoft Yahei" FontSize="18" Grid.Row="3" Background="LightGray" 
-                    TextWrapping="Wrap" Text="" VerticalAlignment="Center" Height="29" Width="393" Canvas.Left="32" Canvas.Top="91"/>
+                    TextWrapping="Wrap" Text="" VerticalAlignment="Center" Height="29" Width="393" Canvas.Left="32" Canvas.Top="91" IsReadOnly="True" />
                 <TextBox x:Name="weightText" HorizontalAlignment="Center" Foreground="Black" FontFamily="Microsoft Yahei" FontSize="18" Background="LightGray" 
-                    TextWrapping="Wrap" Text="" VerticalAlignment="Center" Height="29" Width="393" Canvas.Left="32" Canvas.Top="163"/>
+                    TextWrapping="Wrap" Text="" VerticalAlignment="Center" Height="29" Width="393" Canvas.Left="32" Canvas.Top="163" IsReadOnly="True" />
+                <Label Content="状态：" Canvas.Left="10" Canvas.Top="16" Height="27" FontFamily="Microsoft Yahei" Foreground="Black" Width="45"/>
             </Canvas>
         </Viewbox>
     </Grid>

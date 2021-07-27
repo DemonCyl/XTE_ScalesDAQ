@@ -2,8 +2,10 @@
 using Newtonsoft.Json;
 using System;
 using System.IO;
+using System.IO.Ports;
 using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using XTE_ScalesDAQ.DAL;
 using XTE_ScalesDAQ.Entity;
@@ -21,6 +23,9 @@ namespace XTE_ScalesDAQ
         private ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private NotifyIcon notifyIcon = null;
         private DispatcherTimer ShowTimer;
+        private SerialPort serialPort;
+        private static BitmapImage IFalse = new BitmapImage(new Uri("/Static/01.png", UriKind.Relative));
+        private static BitmapImage ITrue = new BitmapImage(new Uri("/Static/02.png", UriKind.Relative));
 
         public MainWindow()
         {
@@ -30,6 +35,8 @@ namespace XTE_ScalesDAQ
             {
                 LoadJsonData();
                 dal = new MainDAL(config);
+
+                StatusImage.Source = ITrue;
 
                 DataReload();
 
@@ -75,7 +82,7 @@ namespace XTE_ScalesDAQ
                     if (info != null)
                     {
                         barText.Text = info.FBarCode;
-                        // 采集
+                        // 数据采集
 
                         info.FWeight = (decimal)1.132;
 
