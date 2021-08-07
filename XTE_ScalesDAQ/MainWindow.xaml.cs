@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.IO.Ports;
+using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media.Imaging;
@@ -26,17 +27,19 @@ namespace XTE_ScalesDAQ
         private SerialPort serialPort;
         private static BitmapImage IFalse = new BitmapImage(new Uri("/Static/01.png", UriKind.Relative));
         private static BitmapImage ITrue = new BitmapImage(new Uri("/Static/02.png", UriKind.Relative));
+        private BarCodeInfo info = null;
+        private decimal weight = 0;
 
         public MainWindow()
         {
             InitializeComponent();
-
             try
             {
                 LoadJsonData();
                 dal = new MainDAL(config);
 
-                StatusImage.Source = ITrue;
+                var mark = GetConnection();
+                StatusImage.Source = mark ? ITrue : IFalse;
 
                 DataReload();
 
@@ -77,19 +80,22 @@ namespace XTE_ScalesDAQ
             {
                 try
                 {
-                    var info = dal.GetBarCodeInfo(config.FWNo);
-                    bool save = false;
+                    info = dal.GetBarCodeInfo(config.FWNo);
                     if (info != null)
                     {
                         barText.Text = info.FBarCode;
-                        // 数据采集
 
-                        info.FWeight = (decimal)1.132;
+                        if (weight != 0)
+                        {
+                            info.FWMark = 2;
+                            info.FWeight = weight;
 
-                        info.FWMark = 2;
-                        weightText.Text = info.FWeight.ToString();
-
-                        save = dal.UpdateInfo(info);
+                            if (dal.UpdateInfo(info))
+                            {
+                                weight = 0;
+                                barText.Text = "";
+                            }
+                        }
                     }
                 }
                 catch (Exception exc)
@@ -138,14 +144,18 @@ namespace XTE_ScalesDAQ
                                                 MessageBoxImage.Question,
                                                 MessageBoxResult.Yes) == MessageBoxResult.Yes)
             {
-                if (dispatcherTimer.IsEnabled)
+                if (dispatcherTimer != null && dispatcherTimer.IsEnabled)
                 {
                     dispatcherTimer.Stop();
                 }
 
-                if (ShowTimer.IsEnabled)
+                if (ShowTimer != null && ShowTimer.IsEnabled)
                 {
                     ShowTimer.Stop();
+                }
+                if (serialPort != null && serialPort.IsOpen)
+                {
+                    serialPort.Close();
                 }
             }
             else
@@ -153,6 +163,116 @@ namespace XTE_ScalesDAQ
                 e.Cancel = true;
             }
         }
+
+        #region 串口连接
+
+        private bool GetConnection()
+        {
+            bool mark;
+            if (serialPort == null)
+            {
+                serialPort = new SerialPort(config.PortName, config.BaudRate, Parity.None, 8, StopBits.One)
+                {
+                    DtrEnable = true,
+                    RtsEnable = true,
+                    ReadTimeout = 1000
+                };
+                serialPort.ReceivedBytesThreshold = 7;
+                serialPort.DataReceived += SerialPort_DataReceived;
+                mark = OpenPort();
+            }
+            else
+            {
+                mark = OpenPort();
+            }
+            return mark;
+        }
+
+        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            try
+            {
+                SerialPort port = (SerialPort)sender;
+                //开启接收数据线程
+                Thread threadReceiveSub = new Thread(new ParameterizedThreadStart(ReceiveData));
+                threadReceiveSub.Start(port);
+            }
+            catch (Exception ex)
+            {
+                log.Error("thread  " + ex.Message);
+            }
+        }
+
+        private void ReceiveData(object serialPortobj)
+        {
+            try
+            {
+                SerialPort port = (SerialPort)serialPortobj;
+
+                //防止数据接收不完整
+                Thread.Sleep(300);
+
+                string str = port.ReadExisting();
+                str = str.Trim();
+
+                if (!string.IsNullOrEmpty(str))
+                {
+                    weight = TransformData(str);
+                }
+                Dispatcher.Invoke(() =>
+                {
+                    weightText.Text = weight.ToString() + "KG";
+                });
+            }
+            catch (Exception ex)
+            {
+                log.Error("ReceiveError:" + ex.Message);
+            }
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="str">±000.000kg</param>
+        /// <returns></returns>
+        public decimal TransformData(string str)
+        {
+            log.Info("Read:" + str);
+            var tmpStr = str.Substring(0, str.Length - 2);
+
+            return decimal.Parse(tmpStr);
+        }
+
+        private bool OpenPort()
+        {
+            string message = null;
+            try//这里写成异常处理的形式以免串口打不开程序崩溃
+            {
+                if (serialPort.IsOpen)
+                {
+                    serialPort.Close();
+                }
+
+                serialPort.Open();
+            }
+            catch (Exception ex)
+            {
+                message = ex.Message;
+            }
+            if (serialPort.IsOpen)
+            {
+                log.Info("磅秤连接成功！");
+                return true;
+            }
+            else
+            {
+                log.Error("磅秤打开失败!原因为： " + message);
+                serialPort.Close();
+                return false;
+            }
+        }
+
+        #endregion 串口连接
 
         #region 托盘
 
@@ -213,5 +333,19 @@ namespace XTE_ScalesDAQ
         }
 
         #endregion 托盘
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            log.Info("重新连接开始");
+
+            if (serialPort != null && serialPort.IsOpen)
+            {
+                serialPort.Close();
+                serialPort = null;
+            }
+
+            var mark = GetConnection();
+            StatusImage.Source = mark ? ITrue : IFalse;
+        }
     }
 }

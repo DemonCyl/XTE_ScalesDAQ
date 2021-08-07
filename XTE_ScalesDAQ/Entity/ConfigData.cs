@@ -22,5 +22,14 @@ namespace XTE_ScalesDAQ.Entity
         /// 磅秤编号
         /// </summary>
         public int FWNo { get; set; }
+
+        /// <summary>
+        /// 串口号
+        /// </summary>
+        public string PortName { get; set; }
+        /// <summary>
+        /// 波特率
+        /// </summary>
+        public int BaudRate { get; set; }
     }
 }

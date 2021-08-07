@@ -19,6 +19,7 @@
                 <TextBox x:Name="weightText" HorizontalAlignment="Center" Foreground="Black" FontFamily="Microsoft Yahei" FontSize="18" Background="LightGray" 
                     TextWrapping="Wrap" Text="" VerticalAlignment="Center" Height="29" Width="393" Canvas.Left="32" Canvas.Top="163" IsReadOnly="True" />
                 <Label Content="状态：" Canvas.Left="10" Canvas.Top="16" Height="27" FontFamily="Microsoft Yahei" Foreground="Black" Width="45"/>
+                <Button Content="重新连接" Canvas.Left="350" Canvas.Top="219" Width="75" Click="Button_Click"/>
             </Canvas>
         </Viewbox>
     </Grid>

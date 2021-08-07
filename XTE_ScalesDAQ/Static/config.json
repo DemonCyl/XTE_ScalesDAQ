@@ -3,5 +3,8 @@
   "DataBaseName": "JASProSta",
   "Uid": "sa",
   "Pwd": "123456",
-  "FWNo": 1
+  "FWNo": 1,
+
+  "PortName": "COM1",
+  "BaudRate": 9600
 }
