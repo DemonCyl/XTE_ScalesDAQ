@@ -1,8 +1,10 @@
 ﻿using log4net;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Ports;
+using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
@@ -29,6 +31,10 @@ namespace XTE_ScalesDAQ
         private static BitmapImage ITrue = new BitmapImage(new Uri("/Static/02.png", UriKind.Relative));
         private BarCodeInfo info = null;
         private decimal weight = 0;
+        private List<decimal> list = new List<decimal>();
+        private bool signal = false;
+        private bool ready = false;
+        private DateTime time;
 
         public MainWindow()
         {
@@ -83,17 +89,26 @@ namespace XTE_ScalesDAQ
                     info = dal.GetBarCodeInfo(config.FWNo);
                     if (info != null)
                     {
+                        if (!signal)
+                        {
+                            time = DateTime.Now;
+                            signal = true;
+                        }
                         barText.Text = info.FBarCode;
 
-                        if (weight != 0)
+                        if (ready)
                         {
+                            log.Info(list.ToArray());
                             info.FWMark = 2;
-                            info.FWeight = weight;
+                            info.FWeight = list.Average();
 
                             if (dal.UpdateInfo(info))
                             {
                                 weight = 0;
                                 barText.Text = "";
+                                list.Clear();
+                                signal = false;
+                                ready = false;
                             }
                         }
                     }
@@ -210,14 +225,26 @@ namespace XTE_ScalesDAQ
                 SerialPort port = (SerialPort)serialPortobj;
 
                 //防止数据接收不完整
-                Thread.Sleep(300);
+                //Thread.Sleep(100);
 
                 string str = port.ReadExisting();
                 str = str.Trim();
 
                 if (!string.IsNullOrEmpty(str))
                 {
+                    //log.Info("Get:" + str);
                     weight = TransformData(str);
+                    if (signal && !ready)
+                    {
+                        if (time.AddSeconds(2) >= DateTime.Now)
+                        {
+                            list.Add(weight);
+                        }
+                        else
+                        {
+                            ready = true;
+                        }
+                    }
                 }
                 Dispatcher.Invoke(() =>
                 {
@@ -237,7 +264,7 @@ namespace XTE_ScalesDAQ
         /// <returns></returns>
         public decimal TransformData(string str)
         {
-            log.Info("Read:" + str);
+            //log.Info("Read:" + str);
             var tmpStr = str.Substring(0, str.Length - 2);
 
             return decimal.Parse(tmpStr);
